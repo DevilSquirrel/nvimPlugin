@@ -1,0 +1,2 @@
+# nvimPlugin
+nvim a some
