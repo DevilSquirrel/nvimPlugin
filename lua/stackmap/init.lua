@@ -41,11 +41,12 @@ end
 
 M.pop = function(name) end
 
--- M.push("debug_mode", "n", {
--- 	[" st"] = "echo 'Hello'",
--- 	[" sz"] = "echo 'Goodbye'",
--- })
+M.push("debug_mode", "n", {
+	[" st"] = "echo 'Hello'",
+	[" sz"] = "echo 'Goodbye'",
+})
 --[[
 -- lua require
 --]]
+print("----------------------")
 return M
