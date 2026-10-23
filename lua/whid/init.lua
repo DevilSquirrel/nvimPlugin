@@ -2,7 +2,6 @@ local M = {}
 local api = vim.api
 local buf, win
 local position = 0
-
 M.open_test = {}
 M.open_window = function()
 	buf = api.nvim_create_buf(false, true) -- create new emtpy buffer
@@ -29,35 +28,36 @@ M.open_window = function()
 		height = win_height,
 		row = row,
 		col = col,
+		border = { "╔", "═", "╗", "║", "╝", "═", "╚", "║" },
 	}
-	local border_opts = {
-		style = "minimal",
-		relative = "editor",
-		width = win_width + 2,
-		height = win_height + 2,
-		row = row - 1,
-		col = col - 1,
-	}
+	-- local border_opts = {
+	-- 	style = "minimal",
+	-- 	relative = "editor",
+	-- 	width = win_width + 2,
+	-- 	height = win_height + 2,
+	-- 	row = row - 1,
+	-- 	col = col - 1,
+	-- }
 
 	-- and finally create it with buffer attached
 	-- win = api.nvim_open_win(buf, true, opts)
 	-- print("buff", buf, width, height)
 
-	local border_buf = api.nvim_create_buf(false, true)
+	-- local border_buf = api.nvim_create_buf(false, true)
 
-	local border_lines = { "╔" .. string.rep("═", win_width) .. "╗" }
-	local middle_line = "║" .. string.rep(" ", win_width) .. "║"
-	for i = 1, win_height do
-		table.insert(border_lines, middle_line)
-	end
-	table.insert(border_lines, "╚" .. string.rep("═", win_width) .. "╝")
+	-- local border_lines = { "╔" .. string.rep("═", win_width) .. "╗" }
+	-- local middle_line = "║" .. string.rep(" ", win_width) .. "║"
+	-- for i = 1, win_height do
+	-- 	table.insert(border_lines, middle_line)
+	-- end
+	-- table.insert(border_lines, "╚" .. string.rep("═", win_width) .. "╝")
 
-	api.nvim_buf_set_lines(border_buf, 0, -1, false, border_lines)
+	-- api.nvim_buf_set_lines(border_buf, 0, -1, false, border_lines)
 	-- set bufer's (border_buf) lines from first line (0) to last (-1)
 	-- ignoring out-of-bounds error (false) with lines (border_lines)
-	local border_win = api.nvim_open_win(border_buf, true, border_opts)
+	-- local border_win = api.nvim_open_win(border_buf, true, border_opts)
 	win = api.nvim_open_win(buf, true, opts)
-	api.nvim_command('au BufWipeout <buffer> exe "silent bwipeout! "' .. border_buf)
+	-- api.nvim_command('au BufWipeout <buffer> exe "silent bwipeout! "' .. border_buf)
 end
 
 M.update_view = function(direction)
@@ -94,8 +94,51 @@ M.center = function(str)
 	return string.rep(" ", shift) .. str
 end
 
+M.set_mappings = function()
+	local mappings = {
+		["["] = "update_view(-1)",
+		["]"] = "update_view(1)",
+		["<cr>"] = "open_file()",
+		h = "update_view(-1)",
+		l = "update_view(1)",
+		q = "close_window()",
+		k = "move_cursor()",
+	}
+
+	for k, v in pairs(mappings) do
+		api.nvim_buf_set_keymap(buf, "n", k, ':lua require"lua.whid.init".' .. v .. "<cr>", {
+			nowait = true,
+			noremap = true,
+			silent = true,
+		})
+	end
+end
+
+M.close_window = function()
+	api.nvim_win_close(win, true)
+end
+
+-- Our file list start at line 4, so we can prevent reaching above it
+-- from bottm the end of the buffer will limit movment
+M.move_cursor = function()
+	local new_pos = math.max(4, api.nvim_win_get_cursor(win)[1] - 1)
+	api.nvim_win_set_cursor(win, { new_pos, 0 })
+end
+
+-- Open file under cursor
+M.open_file = function()
+	local str = api.nvim_get_current_line()
+	M.close_window()
+	api.nvim_command("edit " .. str)
+end
+
 M.whid = function()
 	print("whid runing1")
+	position = 0 -- if you want to preserve last displayed state just omit this line
+	M.open_window()
+	M.set_mappings()
+	M.update_view(0)
+	api.nvim_win_set_cursor(win, { 4, 0 }) -- set cursor on fir
 end
 
 return M
