@@ -1,3 +1,12 @@
+-- local M = {}
+--
+-- function M.setup(opts)
+-- 	opts = opts or {}
+-- 	vim.notify("whid loaded: " .. vim.inspect(opts))
+-- end
+--
+-- return M
+
 local M = {}
 local api = vim.api
 local buf, win
@@ -63,8 +72,8 @@ end
 M.update_view = function(direction)
 	-- Is nice to prevent user from editing interface, so
 	-- we should enabled it before updating view and disabled after it.
-	api.nvim_buf_set_option(buf, "modifiable", true)
-
+	-- api.nvim_buf_set_option(buf, "modifiable", true)
+	api.nvim_set_option_value("modifiable", true, { buf = buf })
 	position = position + direction
 	if position < 0 then
 		position = 0
@@ -106,7 +115,7 @@ M.set_mappings = function()
 	}
 
 	for k, v in pairs(mappings) do
-		api.nvim_buf_set_keymap(buf, "n", k, ':lua require"lua.whid.init".' .. v .. "<cr>", {
+		api.nvim_buf_set_keymap(buf, "n", k, ':lua require"whid".' .. v .. "<cr>", {
 			nowait = true,
 			noremap = true,
 			silent = true,
@@ -121,6 +130,7 @@ end
 -- Our file list start at line 4, so we can prevent reaching above it
 -- from bottm the end of the buffer will limit movment
 M.move_cursor = function()
+	print("win:::::", win)
 	local new_pos = math.max(4, api.nvim_win_get_cursor(win)[1] - 1)
 	api.nvim_win_set_cursor(win, { new_pos, 0 })
 end
@@ -132,12 +142,15 @@ M.open_file = function()
 	api.nvim_command("edit " .. str)
 end
 
-M.whid = function()
+M.setup = function(opts)
+	opts = opts or {}
 	print("whid runing1")
+	vim.notify("whid loaded: " .. vim.inspect(opts))
 	position = 0 -- if you want to preserve last displayed state just omit this line
 	M.open_window()
 	M.set_mappings()
 	M.update_view(0)
+	print("win:" .. win)
 	api.nvim_win_set_cursor(win, { 4, 0 }) -- set cursor on fir
 end
 
